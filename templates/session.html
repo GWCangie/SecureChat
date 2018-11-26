@@ -14,11 +14,13 @@
       <input type="text" class="message" placeholder="Messages"/>
       <input type="submit"/>
     </form>
-
+    {{ secret }}
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
     <script type="text/javascript">
+        const secret = '{{ secret }}';
+        console.log("secret" +secret);
       var socket = io.connect('http://' + document.domain + ':' + location.port);
       socket.on( 'connect', function() {
         socket.emit( 'my event', {
@@ -43,6 +45,16 @@
         }
       })
     </script>
+    <script>
+    window.sodium = {
+        onload: function (sodium) {
+            let h = sodium.crypto_generichash(64, sodium.from_string('test'));
+            console.log(sodium.to_hex(h));
+        }
+    };
+</script>
+<script src="{{ url_for('static', filename='sodium.js') }}" async></script>
+
 
   </body>
   </html>

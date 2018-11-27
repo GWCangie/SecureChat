@@ -1,25 +1,28 @@
-from flask import Flask, render_template
+from flask import Flask, send_from_directory
 from flask_socketio import SocketIO
 import nacl.secret
 import nacl.utils
+import os
+from base64 import b64decode
+import json
 
+app = Flask(__name__, static_folder='frontend/build')
 
-app = Flask(__name__)
 app.config['SECRET_KEY'] = 'vnkdjnfjknfl1232#'
 socketio = SocketIO(app)
 
-import nacl.secret
-import nacl.utils
 
-# This must be kept secret, this is the combination to your safe
-key = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
+secret = '_THIS_IS_MY_32_CHARS_SECRET_KEY_'
+box = nacl.secret.SecretBox(bytes(secret, encoding='utf8'))
 
-# This is your safe, you can use it to encrypt or decrypt messages
-box = nacl.secret.SecretBox(key)
 
-@app.route('/')
-def sessions():
-    return render_template('session.html', secret=key)
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists("frontend/build/" + path):
+        return send_from_directory('frontend/build', path)
+    else:
+        return send_from_directory('frontend/build', 'index.html')
 
 def messageReceived(methods=['GET', 'POST']):
     print('message was received!!!')
@@ -27,7 +30,24 @@ def messageReceived(methods=['GET', 'POST']):
 @socketio.on('my event')
 def handle_my_custom_event(json, methods=['GET', 'POST']):
     print('received my event: ' + str(json))
-    socketio.emit('my response', json, callback=messageReceived)
+    socketio.emit('new msg', json, callback=messageReceived)
+
+@socketio.on('connect')
+def test_connect():
+    socketio.emit('connected', {'key': secret})
+
+@socketio.on('new msg')
+def new_msg(msg):
+    print('encrypted')
+    print(msg['msg'])
+    encrypted = msg['msg']
+    encrypted = encrypted.split(':')
+    nonce = b64decode(encrypted[0])
+    encrypted = b64decode(encrypted[1])
+    decrypted = box.decrypt(encrypted, nonce).decode('utf-8')
+    print('decrypted')
+    print(decrypted)
+    socketio.emit('new msg', msg)
 
 
 if __name__ == '__main__':

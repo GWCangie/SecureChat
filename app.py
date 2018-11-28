@@ -11,10 +11,8 @@ app = Flask(__name__, static_folder='frontend/build')
 app.config['SECRET_KEY'] = 'vnkdjnfjknfl1232#'
 socketio = SocketIO(app)
 
-
-secret = '_THIS_IS_MY_32_CHARS_SECRET_KEY_'
-box = nacl.secret.SecretBox(bytes(secret, encoding='utf8'))
-
+secret = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
+box = nacl.secret.SecretBox(secret)
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -30,7 +28,7 @@ def messageReceived(methods=['GET', 'POST']):
 @socketio.on('my event')
 def handle_my_custom_event(json, methods=['GET', 'POST']):
     print('received my event: ' + str(json))
-    socketio.emit('new msg', json, callback=messageReceived)
+    
 
 @socketio.on('connect')
 def test_connect():
@@ -38,13 +36,7 @@ def test_connect():
 
 @socketio.on('new msg')
 def new_msg(msg):
-    print('encrypted')
-    print(msg['msg'])
-    encrypted = msg['msg']
-    encrypted = encrypted.split(':')
-    nonce = b64decode(encrypted[0])
-    encrypted = b64decode(encrypted[1])
-    decrypted = box.decrypt(encrypted, nonce).decode('utf-8')
+    decrypted = box.decrypt(bytes(msg['non64']), bytes(msg['nonce'])).decode('utf-8')
     print('decrypted')
     print(decrypted)
     socketio.emit('new msg', msg)

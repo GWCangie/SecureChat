@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import AppBar from './AppBar'
 import logo from './logo.svg';
 import './App.css';
 
@@ -8,7 +9,7 @@ import * as util from 'tweetnacl-util'
 import openSocket from 'socket.io-client';
 const encodeBase64 = util.encodeBase64
 
-
+const socket = openSocket('http://localhost:5000');
 class App extends Component {
 
   constructor(){
@@ -18,10 +19,23 @@ class App extends Component {
       key: null
     }
   }
-
+  /*
+  handleChange =  (msg) =>{
+    console.log(msg);
+    const nonce = nacl.randomBytes(24)
+    const arr = [...nonce];
+    const secretData = Buffer.from(msg, 'utf8')
+    const encrypted = nacl.secretbox(secretData, nonce, this.state.secretKey)
+    const encryptedArr= [...encrypted]
+    socket.emit('new msg', {
+      nonce: arr,
+      non64: encryptedArr
+    })
+  }
+  */
+  
   componentDidMount(){
-
-    const  socket = openSocket('http://localhost:5000');
+    
     socket.on( 'connect', function() {
       socket.emit( 'my event', {
         data: 'User Connected'
@@ -40,7 +54,7 @@ class App extends Component {
       this.setState({key: secretKey})
       const nonce = nacl.randomBytes(24)
       const arr = [...nonce];
-      const secretData = Buffer.from('Some Italians hate wine', 'utf8')
+      const secretData = Buffer.from('PlayboiCarti;Some Italians hate wine', 'utf8')
       const encrypted = nacl.secretbox(secretData, nonce, secretKey)
       const encryptedArr= [...encrypted]
       socket.emit('new msg', {
@@ -52,20 +66,7 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
+        <AppBar messages={this.state.messages}/>
       </div>
     );
   }

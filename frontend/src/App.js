@@ -10,6 +10,9 @@ import openSocket from 'socket.io-client';
 const encodeBase64 = util.encodeBase64
 
 const socket = openSocket('http://localhost:5000');
+
+//const secret = {{key}}
+//console.log(secret)
 class App extends Component {
 
   constructor(){
@@ -18,7 +21,8 @@ class App extends Component {
       messages: [],
       key: null,
       name: 'Anonymous',
-      input: ''
+      input: '',
+      room: window.location.pathname.split('/room/')[1]
     }
   }
 
@@ -33,23 +37,26 @@ class App extends Component {
   handleSubmit =  e =>{
     const nonce = nacl.randomBytes(24)
     const arr = [...nonce];
-    const msg = this.state.name.concat(';'.concat(this.state.input))
+    const msg = this.state.name + ';' + this.state.input
     const secretData = Buffer.from(msg, 'utf8')
     const encrypted = nacl.secretbox(secretData, nonce, this.state.key)
     const encryptedArr= [...encrypted]
     socket.emit('new msg', {
       nonce: arr,
-      non64: encryptedArr
+      non64: encryptedArr,
+      room: this.state.room
     })
     this.setState({input:''})
   }
   
   
   componentDidMount(){
-    
+    const room = this.state.room
+    console.log(room)
     socket.on( 'connect', function() {
       socket.emit( 'my event', {
-        data: 'User Connected'
+        data: 'User Connected',
+        room: room,
       } )});
 
     socket.on('new msg', message => {
@@ -76,6 +83,7 @@ class App extends Component {
         changeInput={this.changeInput} 
         submit={this.handleSubmit}
         />
+
       </div>
     );
   }

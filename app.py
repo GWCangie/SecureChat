@@ -1,13 +1,11 @@
 from flask import Flask, send_from_directory, render_template
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, join_room
 import nacl.secret
 import nacl.utils
 import nacl.encoding
 import nacl.hash
 import os
 import time
-from base64 import b64decode
-import json
 
 app = Flask(__name__, static_folder='frontend/build')
 
@@ -23,13 +21,24 @@ rooms = []
 @app.route('/create', methods=['GET','POST'])
 def create():
     print("HIT CREATE")
-    newRoom = HASHER(bytes(int(time.time())), encoder=nacl.encoding.URLSafeBase64Encoder)
+    currentTime = bytes(int(time.time()))
+    newRoom = HASHER(currentTime, encoder=nacl.encoding.URLSafeBase64Encoder)
     while( newRoom in rooms):
-        newRoom = HASHER(bytes(int(time.time())), encoder=nacl.encoding.URLSafeBase64Encoder)
+        currentTime = bytes(int(time.time()))
+        newRoom = HASHER(currentTime, encoder=nacl.encoding.URLSafeBase64Encoder)
     print(newRoom)
-    rooms.append(newRoom)
+    rooms.append({'path': newRoom, 'time':currentTime})
     return render_template("YourRoom.html", room=newRoom)
 
+@app.route('/room/<path:path>')
+def sendChat(path):
+    print("redirecting to chat")
+    print(path)
+    if "b'" in path:
+        for room in rooms:
+            if room['path'] == path:
+               return render_template('index.html', key=secret)
+    return render_template('index.html')
 
 @app.route('/login')
 def login():
@@ -48,18 +57,23 @@ def messageReceived(methods=['GET', 'POST']):
 @socketio.on('my event')
 def handle_my_custom_event(json, methods=['GET', 'POST']):
     print('received my event: ' + str(json))
+    room = json['room']
+    join_room(room)
+    socketio.emit('connected', {'key': secret}, room=room)
+
     
 
 @socketio.on('connect')
 def test_connect():
-    socketio.emit('connected', {'key': secret})
+    pass
+
 
 @socketio.on('new msg')
 def new_msg(msg):
     decrypted = box.decrypt(bytes(msg['non64']), bytes(msg['nonce'])).decode('utf-8')
     print('decrypted')
     print(decrypted)
-    socketio.emit('new msg', msg)
+    socketio.emit('new msg', msg, room=msg['room'])
 
 
 if __name__ == '__main__':

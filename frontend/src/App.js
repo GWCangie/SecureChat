@@ -16,23 +16,34 @@ class App extends Component {
     super();
     this.state = { 
       messages: [],
-      key: null
+      key: null,
+      name: 'Anonymous',
+      input: ''
     }
   }
-  /*
-  handleChange =  (msg) =>{
-    console.log(msg);
+
+  changeName = e =>{
+    this.setState({name: e.target.value})
+  }
+
+  changeInput = e =>{
+    this.setState({input: e.target.value})
+  }
+  
+  handleSubmit =  e =>{
     const nonce = nacl.randomBytes(24)
     const arr = [...nonce];
+    const msg = this.state.name.concat(';'.concat(this.state.input))
     const secretData = Buffer.from(msg, 'utf8')
-    const encrypted = nacl.secretbox(secretData, nonce, this.state.secretKey)
+    const encrypted = nacl.secretbox(secretData, nonce, this.state.key)
     const encryptedArr= [...encrypted]
     socket.emit('new msg', {
       nonce: arr,
       non64: encryptedArr
     })
+    this.setState({input:''})
   }
-  */
+  
   
   componentDidMount(){
     
@@ -51,22 +62,20 @@ class App extends Component {
 
     socket.on('connected', json => {
       const secretKey = Buffer.from(json.key, 'utf8')
-      this.setState({key: secretKey})
-      const nonce = nacl.randomBytes(24)
-      const arr = [...nonce];
-      const secretData = Buffer.from('PlayboiCarti;Some Italians hate wine', 'utf8')
-      const encrypted = nacl.secretbox(secretData, nonce, secretKey)
-      const encryptedArr= [...encrypted]
-      socket.emit('new msg', {
-        nonce: arr,
-        non64: encryptedArr
-      })
+      this.setState({key: secretKey, messages: [...this.state.messages, "SecureChat; User has joined"]})
     });
   }
   render() {
     return (
       <div className="App">
-        <AppBar messages={this.state.messages}/>
+        <AppBar 
+        messages={this.state.messages} 
+        name={this.state.name} 
+        input={this.state.input}
+        changeName={this.changeName}
+        changeInput={this.changeInput} 
+        submit={this.handleSubmit}
+        />
       </div>
     );
   }

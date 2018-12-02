@@ -7,15 +7,10 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import Paper from '@material-ui/core/Paper';
-import Fab from '@material-ui/core/Fab';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import ListSubheader from '@material-ui/core/ListSubheader';
-import Avatar from '@material-ui/core/Avatar';
-import MenuIcon from '@material-ui/icons/Menu';
 import AddIcon from '@material-ui/icons/Add';
-import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 
 const styles = theme => ({
@@ -44,7 +39,6 @@ const styles = theme => ({
 
 function BottomAppBar(props) {
   const { classes } = props;
-  let input ='test';
   return (
     <React.Fragment>
       <CssBaseline />
@@ -70,10 +64,19 @@ function BottomAppBar(props) {
         id="standard-name"
           label="Name"
           className={classes.textField}
-          value={input}
+          onChange={props.changeName}
+          value={props.name}
           margin="normal"
         />
-            <IconButton color="inherit">
+          <TextField
+        id="standard-name"
+          label="Name"
+          className={classes.textField}
+          onChange={props.changeInput}
+          value={props.input}
+          margin="normal"
+        />
+            <IconButton color="inherit" onClick={props.submit}>
               <AddIcon />
             </IconButton>
           </div>

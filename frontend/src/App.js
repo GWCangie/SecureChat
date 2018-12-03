@@ -25,6 +25,9 @@ class App extends Component {
       room: window.location.pathname.split('/room/')[1]
     }
   }
+  destroy = e =>{
+    socket.emit('destroy', {room: this.state.room})
+  }
 
   changeName = e =>{
     this.setState({name: e.target.value})
@@ -58,7 +61,6 @@ class App extends Component {
         data: 'User Connected',
         room: room,
       } )});
-
     socket.on('new msg', message => {
       const nonce = Uint8Array.from(message.nonce)
       const encrypted = Uint8Array.from(message.non64)
@@ -71,6 +73,11 @@ class App extends Component {
       const secretKey = Buffer.from(json.key, 'utf8')
       this.setState({key: secretKey, messages: [...this.state.messages, "SecureChat; User has joined"]})
     });
+    socket.on('destroy', _ => {
+      this.setState({messages: []})
+      socket.close()
+
+    })
   }
   render() {
     return (
@@ -82,6 +89,7 @@ class App extends Component {
         changeName={this.changeName}
         changeInput={this.changeInput} 
         submit={this.handleSubmit}
+        destroy={this.destroy}
         />
 
       </div>

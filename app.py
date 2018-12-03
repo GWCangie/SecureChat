@@ -21,7 +21,7 @@ rooms = []
 @app.route('/create', methods=['GET','POST'])
 def create():
     print("HIT CREATE")
-    currentTime = bytes(int(time.time()))
+    currentTime= bytes(int(time.time()))
     newRoom = HASHER(currentTime, encoder=nacl.encoding.URLSafeBase64Encoder)
     while( newRoom in rooms):
         currentTime = bytes(int(time.time()))
@@ -37,8 +37,9 @@ def sendChat(path):
     if "b'" in path:
         for room in rooms:
             if room['path'] == path:
-               return render_template('index.html', key=secret)
-    return render_template('index.html')
+                print('hit path')
+                return send_from_directory('frontend/build', 'index.html')
+    return send_from_directory('frontend/build', 'index.html')
 
 @app.route('/login')
 def login():
@@ -63,17 +64,19 @@ def handle_my_custom_event(json, methods=['GET', 'POST']):
 
     
 
-@socketio.on('connect')
-def test_connect():
-    pass
 
-
+@socketio.on('destroy')
+def destroy(msg):
+    room = [room for room in rooms if room['path'] == msg['room']]
+    socketio.emit('destroy', room=msg['room'])
+    rooms.remove(room)
 @socketio.on('new msg')
 def new_msg(msg):
     decrypted = box.decrypt(bytes(msg['non64']), bytes(msg['nonce'])).decode('utf-8')
     print('decrypted')
     print(decrypted)
     socketio.emit('new msg', msg, room=msg['room'])
+
 
 
 if __name__ == '__main__':

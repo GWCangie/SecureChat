@@ -12,6 +12,7 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import AddIcon from '@material-ui/icons/Add';
 import TextField from '@material-ui/core/TextField';
+import { Button } from '@material-ui/core';
 
 const styles = theme => ({
   text: {
@@ -45,6 +46,7 @@ function BottomAppBar(props) {
       <Paper square className={classes.paper}>
         <Typography className={classes.text} variant="h5" gutterBottom>
             Messages
+            <Button onClick={props.destroy}>DELETE ROOM</Button>
         </Typography>
         <List className={classes.list}>
           {props.messages.map( msg => (
